@@ -56,33 +56,33 @@ def health_check():
 def read_root():
     return {"message": "College Chatbot API is running 🚀"}
 
-# ---------- Webhook (Dialogflow) ----------
+# ---------- Webhook ----------
 @app.post("/webhook")
 async def webhook(req: Request, db: Session = Depends(get_db)):
     try:
         body = await req.json()
-        intent = body["queryResult"]["intent"]["displayName"]
-        params = body["queryResult"]["parameters"]
+        intent_name = body["queryResult"]["intent"]["displayName"]
+        parameters = body["queryResult"]["parameters"]
+        query_text = body["queryResult"]["queryText"]
 
-        logger.info(f"Incoming intent: {intent} | Params: {params}")
+        logger.info(f"Webhook called: intent={intent_name}, params={parameters}")
 
-        handler = INTENT_HANDLERS.get(intent)
-        response_text = handler(params, db) if handler else "Sorry, I don’t know how to handle that yet."
+        handler = INTENT_HANDLERS.get(intent_name)
+        if not handler:
+            response_text = "Sorry, I don’t know how to handle that yet."
+        else:
+            response_text = handler(parameters, db)
 
-        # Log safely
-        try:
-            new_log = models.Log(
-                college_id=None,
-                user_id=body.get("session", "unknown"),
-                query=body["queryResult"].get("queryText", ""),
-                bot_response=response_text,
-                timestamp=datetime.utcnow().isoformat()
-            )
-            db.add(new_log)
-            db.commit()
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Failed to log query: {e}")
+        # Log to DB
+        new_log = models.Log(
+            college_id=None,
+            user_id=body.get("session", "unknown"),
+            query=query_text,
+            bot_response=response_text,
+            timestamp=datetime.utcnow().isoformat()
+        )
+        db.add(new_log)
+        db.commit()
 
         return {"fulfillmentText": response_text}
 
