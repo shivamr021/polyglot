@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Header, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import logging
@@ -149,7 +150,8 @@ async def webhook(
         db.add(new_log)
         db.commit()
 
-        return {"fulfillmentText": response_text}
+        response = {"fulfillmentText": response_text}
+        return JSONResponse(content=response, media_type="application/json; charset=utf-8")
 
     except Exception as e:
         logger.error(f"Webhook error: {e}")
