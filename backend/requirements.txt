@@ -1,11 +1,10 @@
-fastapi 
-uvicorn 
-psycopg2-binary 
-sqlalchemy 
-alembic 
-pandas
+fastapi
+uvicorn
+gunicorn
+sqlalchemy
+psycopg2-binary
 python-dotenv
-sqladmin
 passlib[bcrypt]
 python-jose[cryptography]
+sqladmin
 python-multipart
