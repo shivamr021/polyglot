@@ -54,17 +54,30 @@ setup_admin(app, engine)
 # --- Authentication Router ---
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@auth_router.post("/signup", response_model=schemas.UserOut)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+# This is the ONLY signup endpoint, protected by a secret key.
+# It's for a super-admin to create college admin accounts.
+@auth_router.post("/create-admin", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
+def create_admin_user(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    x_admin_secret: str = Header(...)
+):
+    # Check if the provided secret matches the one in our environment
+    if not x_admin_secret or x_admin_secret != os.getenv("ADMIN_SECRET_KEY"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to create an admin account")
+
+    # Check if the user already exists
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Create the new user
     hashed_password = auth.get_password_hash(user.password)
     new_user = models.User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
-        role=user.role,
+        role=user.role or "admin",  # Default role to 'admin' if not provided
     )
     db.add(new_user)
     db.commit()
@@ -89,18 +102,6 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 app.include_router(auth_router)
-
-ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY")
-# --- Admin-Protected Signup ---
-@auth_router.post("/signup", response_model=schemas.UserOut)
-def create_user(
-    user: schemas.UserCreate,
-    db: Session = Depends(get_db),
-    x_admin_secret: str = Header(None)
-):
-    if x_admin_secret != ADMIN_SECRET_KEY:
-        raise HTTPException(status_code=403, detail="Unauthorized signup")
-    ...
 
 
 # ---------- Health Check ----------
@@ -169,8 +170,14 @@ async def read_users_me(
 
 
 # ---------- Colleges ----------
-@app.post("/colleges/", response_model=schemas.CollegeOut)
-def create_college(college: schemas.CollegeCreate, db: Session = Depends(get_db)):
+@app.post("/colleges/", response_model=schemas.CollegeOut, status_code=status.HTTP_201_CREATED)
+def create_college(
+    college: schemas.CollegeCreate, 
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create colleges.")
     try:
         new_college = models.College(**college.dict())
         db.add(new_college)
@@ -191,8 +198,15 @@ def get_colleges(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Could not fetch colleges")
 
 # ---------- FAQs ----------
-@app.post("/faqs/", response_model=schemas.FAQOut)
-def create_faq(faq: schemas.FAQCreate, db: Session = Depends(get_db)):
+@app.post("/faqs/", response_model=schemas.FAQOut, status_code=status.HTTP_201_CREATED)
+def create_faq(
+    faq: schemas.FAQCreate, 
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create FAQs.")
+    
     college = db.query(models.College).filter(models.College.id == faq.college_id).first()
     if not college:
         raise HTTPException(status_code=404, detail="College not found")
@@ -216,8 +230,14 @@ def get_faqs(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Could not fetch FAQs")
 
 # ---------- Fees ----------
-@app.post("/fees/", response_model=schemas.FeeOut)
-def create_fee(fee: schemas.FeeCreate, db: Session = Depends(get_db)):
+@app.post("/fees/", response_model=schemas.FeeOut, status_code=status.HTTP_201_CREATED)
+def create_fee(
+    fee: schemas.FeeCreate, 
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create fees.")
     try:
         new_fee = models.Fee(**fee.dict())
         db.add(new_fee)
@@ -238,8 +258,14 @@ def get_fees(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Could not fetch fees")
 
 # ---------- Holidays ----------
-@app.post("/holidays/", response_model=schemas.HolidayOut)
-def create_holiday(holiday: schemas.HolidayCreate, db: Session = Depends(get_db)):
+@app.post("/holidays/", response_model=schemas.HolidayOut, status_code=status.HTTP_201_CREATED)
+def create_holiday(
+    holiday: schemas.HolidayCreate, 
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create holidays.")
     try:
         new_holiday = models.Holiday(**holiday.dict())
         db.add(new_holiday)
@@ -261,7 +287,12 @@ def get_holidays(db: Session = Depends(get_db)):
 
 # ---------- Logs ----------
 @app.get("/logs/", response_model=list[schemas.LogOut])
-def get_logs(db: Session = Depends(get_db)):
+def get_logs(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can view logs.")
     try:
         return db.query(models.Log).all()
     except Exception as e:
