@@ -8,3 +8,4 @@ passlib[bcrypt]
 python-jose[cryptography]
 sqladmin
 python-multipart
+itsdangerous
