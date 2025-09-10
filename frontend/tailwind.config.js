@@ -11,6 +11,7 @@ export default {
         italiana: ['Italiana', 'sans-serif'],
         bebas: ['Bebas Neue', 'sans-serif'],
         bevan: ['Bevan', 'sans-serif'],
+        fascinate: ['Fascinate', 'sans-serif']
       },
       animation: {
         'star-movement-bottom': 'star-movement-bottom linear infinite alternate',

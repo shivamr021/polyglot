@@ -6,7 +6,7 @@ export default function Dashboard() {
         <>
             <div className="h-screen overflow-hidden">
                 <nav>
-                    <div className='text-2xl text-shadow-lg text-[#3b1a6f] font-mono fixed top-5 left-5 font-bevan'>PolyGlot</div>
+                    <div className='text-2xl text-shadow-lg text-[#3b1a6f] font-mono fixed top-5 left-5 font-fascinate font-bold'>PolyGlot</div>
                     <div className="fixed top-5 right-5 border rounded-full p-3 cursor-pointer">bot</div>
                 </nav>
                 <div className='w-full h-[500px] flex justify-center items-center text-center'>
@@ -28,7 +28,7 @@ export default function Dashboard() {
                                 as="button"
                                 className="custom-class"
                                 color="#7C00FE"
-                                thickness={10}
+                                thickness={6}
                                 speed="5s"
                             >
                                 Ask query
