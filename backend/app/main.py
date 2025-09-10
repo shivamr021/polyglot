@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Header, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -20,6 +21,7 @@ from app.intents.timetable import handle_timetable_query
 
 # --- Environment Variables ---
 DIALOGFLOW_SECRET = os.getenv("DIALOGFLOW_SECRET")
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "default-secret-for-dev")
 
 # ---------- Logging ----------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -38,6 +40,9 @@ INTENT_HANDLERS = {
 # ---------- App Setup ----------
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="College Chatbot API", version="1.0.0")
+
+# This must be added for the SQLAdmin dashboard login to work.
+app.add_middleware(SessionMiddleware, secret_key=ADMIN_SECRET_KEY)
 
 # Allow frontend access
 app.add_middleware(
@@ -88,7 +93,7 @@ def create_admin_user(
 async def login_for_access_token(
     form_data: auth.OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    user = auth.get_user(db, form_data.username)
+    user = auth.get_user(db, form_data.username) # form_data.username is the email
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -96,8 +101,9 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    # Using user.email for the JWT subject for better reliability
     access_token = auth.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -140,9 +146,16 @@ async def webhook(
         else:
             response_text = handler(parameters, db)
 
-        # Log to DB
+        # Log to DB with college_id if available
+        college_id = None
+        if 'college' in parameters and parameters['college']:
+            # Attempt to find the college mentioned in the query
+            college = db.query(models.College).filter(models.College.name.ilike(f"%{parameters['college']}%")).first()
+            if college:
+                college_id = college.id
+        
         new_log = models.Log(
-            college_id=None,
+            college_id=college_id, # Use the found college_id
             user_id=body.get("session", "unknown"),
             query=query_text,
             bot_response=response_text,
@@ -190,7 +203,10 @@ def create_college(
         raise HTTPException(status_code=500, detail="Could not create college")
 
 @app.get("/colleges/", response_model=list[schemas.CollegeOut])
-def get_colleges(db: Session = Depends(get_db)):
+def get_colleges(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
     try:
         return db.query(models.College).all()
     except Exception as e:
@@ -222,7 +238,10 @@ def create_faq(
         raise HTTPException(status_code=500, detail="Could not create FAQ")
 
 @app.get("/faqs/", response_model=list[schemas.FAQOut])
-def get_faqs(db: Session = Depends(get_db)):
+def get_faqs(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
     try:
         return db.query(models.FAQ).all()
     except Exception as e:
@@ -250,7 +269,10 @@ def create_fee(
         raise HTTPException(status_code=500, detail="Could not create fee")
 
 @app.get("/fees/", response_model=list[schemas.FeeOut])
-def get_fees(db: Session = Depends(get_db)):
+def get_fees(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
     try:
         return db.query(models.Fee).all()
     except Exception as e:
@@ -278,7 +300,10 @@ def create_holiday(
         raise HTTPException(status_code=500, detail="Could not create holiday")
 
 @app.get("/holidays/", response_model=list[schemas.HolidayOut])
-def get_holidays(db: Session = Depends(get_db)):
+def get_holidays(
+    db: Session = Depends(get_db),
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user)
+):
     try:
         return db.query(models.Holiday).all()
     except Exception as e:
