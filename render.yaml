@@ -3,10 +3,10 @@ services:
     name: college-chatbot-api
     env: python
     plan: free
-    # This is the crucial line for your structure
     rootDir: backend
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app"
+    # Corrected startCommand below
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT app.main:app"
     envVars:
       - key: PYTHON_VERSION
-        value: '3.12.10'
+        value: '3.12.0'
