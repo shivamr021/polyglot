@@ -1,5 +1,4 @@
 import React from 'react';
-import './border.css'
 
 type StarBorderProps<T extends React.ElementType> = React.ComponentPropsWithoutRef<T> & {
   as?: T;
@@ -44,7 +43,7 @@ const StarBorder = <T extends React.ElementType = 'button'>({
           animationDuration: speed
         }}
       ></div>
-      <div className="relative z-1 bg-gradient-to-b from-[#110434] to-gray-600 border border-gray-800 text-white text-center text-[16px] py-[16px] px-[26px] rounded-[20px]">
+      <div className="relative z-10 bg-gradient-to-b from-black to-gray-900 border border-gray-800 text-white text-center text-[16px] py-[16px] px-[26px] rounded-[20px]">
         {children}
       </div>
     </Component>
@@ -57,19 +56,19 @@ export default StarBorder;
 // module.exports = {
 //   theme: {
 //     extend: {
-//       animation: {
-//         'star-movement-bottom': 'star-movement-bottom linear infinite alternate',
-//         'star-movement-top': 'star-movement-top linear infinite alternate',
-//       },
-//       keyframes: {
-//         'star-movement-bottom': {
-//           '0%': { transform: 'translate(0%, 0%)', opacity: '1' },
-//           '100%': { transform: 'translate(-100%, 0%)', opacity: '0' },
-//         },
-//         'star-movement-top': {
-//           '0%': { transform: 'translate(0%, 0%)', opacity: '1' },
-//           '100%': { transform: 'translate(100%, 0%)', opacity: '0' },
-//         },
+      // animation: {
+      //   'star-movement-bottom': 'star-movement-bottom linear infinite alternate',
+      //   'star-movement-top': 'star-movement-top linear infinite alternate',
+      // },
+      // keyframes: {
+      //   'star-movement-bottom': {
+      //     '0%': { transform: 'translate(0%, 0%)', opacity: '1' },
+      //     '100%': { transform: 'translate(-100%, 0%)', opacity: '0' },
+      //   },
+      //   'star-movement-top': {
+      //     '0%': { transform: 'translate(0%, 0%)', opacity: '1' },
+      //     '100%': { transform: 'translate(100%, 0%)', opacity: '0' },
+      //   },
 //       },
 //     },
 //   }
