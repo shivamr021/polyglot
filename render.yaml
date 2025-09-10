@@ -11,6 +11,3 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: '3.12'
-      # Remember to set your secrets in the Render Dashboard, not here.
-      - key: DATABASE_URL
-        generateValue: true # Example if using a Render DB
