@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
-from datetime import datetime
+from datetime import datetime, timezone  # Import timezone here
 
 # ---------- User ----------
 class User(Base):
@@ -11,8 +11,9 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="admin")  # admin, staff, student
-    created_at = Column(DateTime, default=datetime.timezone.utcnow)
+    role = Column(String, default="user")
+    # Corrected line below
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ---------- Colleges ----------
