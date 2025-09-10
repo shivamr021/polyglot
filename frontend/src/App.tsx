@@ -1,13 +1,15 @@
 
 import './App.css'
+import Dashboard from './components/dashboard'
 
 function App() {
 
   return (
     <>
-      <div className='text-5xl'>Hey</div>
+      <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: `url(${'/bg.jpg'})` }}>
+        <Dashboard />
+      </div>
     </>
   )
 }
-
 export default App
