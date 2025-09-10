@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Header, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+import os
 
 from app.database import Base, engine, get_db
-from app import models, schemas
+from app import models, schemas, auth
 from app.admin import setup_admin
 
 # Import intent handlers
@@ -15,6 +16,9 @@ from app.intents.faqs import handle_faq_query
 from app.intents.admissions import handle_admission_query
 from app.intents.scholarships import handle_scholarship_query
 from app.intents.timetable import handle_timetable_query
+
+# --- Environment Variables ---
+DIALOGFLOW_SECRET = os.getenv("DIALOGFLOW_SECRET")
 
 # ---------- Logging ----------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -46,6 +50,58 @@ app.add_middleware(
 # Setup SQLAdmin (Dashboard)
 setup_admin(app, engine)
 
+# --- Authentication Router ---
+auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+@auth_router.post("/signup", response_model=schemas.UserOut)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    hashed_password = auth.get_password_hash(user.password)
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password,
+        role=user.role,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@auth_router.post("/login", response_model=auth.Token)
+async def login_for_access_token(
+    form_data: auth.OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
+    user = auth.get_user(db, form_data.username)
+    if not user or not auth.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = auth.create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+app.include_router(auth_router)
+
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY")
+# --- Admin-Protected Signup ---
+@auth_router.post("/signup", response_model=schemas.UserOut)
+def create_user(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    x_admin_secret: str = Header(None)
+):
+    if x_admin_secret != ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Unauthorized signup")
+    ...
+
+
 # ---------- Health Check ----------
 @app.get("/health")
 def health_check():
@@ -58,7 +114,16 @@ def read_root():
 
 # ---------- Webhook ----------
 @app.post("/webhook")
-async def webhook(req: Request, db: Session = Depends(get_db)):
+async def webhook(
+    req: Request,
+    x_dialogflow_secret: str = Header(None),
+    db: Session = Depends(get_db),
+):
+    # --- Webhook Security Check ---
+    if not DIALOGFLOW_SECRET or x_dialogflow_secret != DIALOGFLOW_SECRET:
+        logger.warning("Unauthorized webhook access attempt.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid secret token")
+
     try:
         body = await req.json()
         intent_name = body["queryResult"]["intent"]["displayName"]
@@ -89,6 +154,17 @@ async def webhook(req: Request, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+# ---------- Protected Route Example ----------
+@app.get("/users/me/", response_model=schemas.UserOut)
+async def read_users_me(
+    current_user: schemas.UserOut = Depends(auth.get_current_active_user),
+):
+    """
+    Example of a protected route that requires JWT authentication.
+    """
+    return current_user
+
 
 # ---------- Colleges ----------
 @app.post("/colleges/", response_model=schemas.CollegeOut)
@@ -189,3 +265,4 @@ def get_logs(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error fetching logs: {e}")
         raise HTTPException(status_code=500, detail="Could not fetch logs")
+

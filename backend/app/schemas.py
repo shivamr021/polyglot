@@ -1,5 +1,21 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime
+
+# ---------- User ----------
+class UserBase(BaseModel):
+    username: str
+    email: str
+    role: str = "admin"
+
+class UserCreate(UserBase):
+    password: str  # plain password, will be hashed before saving
+
+class UserOut(UserBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # ---------- Colleges ----------

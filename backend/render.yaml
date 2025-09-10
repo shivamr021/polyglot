@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: college-chatbot-api
+    env: python
+    plan: free # Or your preferred plan
+    rootDir: . # Specifies the backend folder is the root
+    pythonVersion: '3.12' # Match your local Python version
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: '3.12'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: your-db-name # Optional: if using a Render Postgres DB
+          property: connectionString
+      # --- Add other secrets directly in the Render Dashboard ---

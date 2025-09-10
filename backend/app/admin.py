@@ -1,10 +1,46 @@
 from sqladmin import Admin, ModelView
+from sqladmin.authentication import AuthenticationBackend
+from starlette.requests import Request
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+import os
+
 from app import models
+from app.database import SessionLocal
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+# ---------- Authentication Backend ----------
+class AdminAuth(AuthenticationBackend):
+    async def login(self, request: Request) -> bool:
+        form = await request.form()
+        username, password = form["username"], form["password"]
+
+        db: Session = SessionLocal()
+        try:
+            user = db.query(models.User).filter(models.User.username == username).first()
+            if user and pwd_context.verify(password, user.hashed_password):
+                request.session.update({"user": user.username})
+                return True
+            return False
+        finally:
+            db.close()
+
+    async def logout(self, request: Request):
+        request.session.clear()
+
+    async def authenticate(self, request: Request):
+        return request.session.get("user")
+
+
+# ---------- SQLAdmin Setup ----------
 def setup_admin(app, engine):
-    admin = Admin(app, engine)
+    authentication_backend = AdminAuth(secret_key=os.getenv("ADMIN_SECRET_KEY", "default-secret"))
+    admin = Admin(app, engine, authentication_backend=authentication_backend)
 
+    # Colleges
     class CollegeAdmin(ModelView, model=models.College):
         column_list = [
             models.College.id,
@@ -12,7 +48,7 @@ def setup_admin(app, engine):
             models.College.domain,
             models.College.location,
         ]
-
+    # Departments
     class DepartmentAdmin(ModelView, model=models.Department):
         column_list = [
             models.Department.id,
@@ -20,6 +56,7 @@ def setup_admin(app, engine):
             models.Department.college_id,
         ]
 
+    # FAQs
     class FAQAdmin(ModelView, model=models.FAQ):
         column_list = [
             models.FAQ.id,
@@ -31,6 +68,7 @@ def setup_admin(app, engine):
             models.FAQ.dept_id,
         ]
 
+    # Fees
     class FeeAdmin(ModelView, model=models.Fee):
         column_list = [
             models.Fee.id,
@@ -42,6 +80,7 @@ def setup_admin(app, engine):
             models.Fee.dept_id,
         ]
 
+    # Holidays
     class HolidayAdmin(ModelView, model=models.Holiday):
         column_list = [
             models.Holiday.id,
@@ -52,6 +91,7 @@ def setup_admin(app, engine):
             models.Holiday.dept_id,
         ]
 
+    # Admissions
     class AdmissionAdmin(ModelView, model=models.Admission):
         column_list = [
             models.Admission.id,
@@ -63,6 +103,7 @@ def setup_admin(app, engine):
             models.Admission.dept_id,
         ]
 
+    # Scholarships
     class ScholarshipAdmin(ModelView, model=models.Scholarship):
         column_list = [
             models.Scholarship.id,
@@ -73,6 +114,7 @@ def setup_admin(app, engine):
             models.Scholarship.college_id,
         ]
 
+    # Timetables
     class TimetableAdmin(ModelView, model=models.Timetable):
         column_list = [
             models.Timetable.id,
@@ -84,6 +126,7 @@ def setup_admin(app, engine):
             models.Timetable.dept_id,
         ]
 
+    # Logs
     class LogAdmin(ModelView, model=models.Log):
         column_list = [
             models.Log.id,
@@ -94,6 +137,17 @@ def setup_admin(app, engine):
             models.Log.timestamp,
         ]
 
+    # Users (new)
+    class UserAdmin(ModelView, model=models.User):
+        column_list = [
+            models.User.id,
+            models.User.username,
+            models.User.email,
+            models.User.role,
+            models.User.created_at,
+        ]
+
+    # Add views
     admin.add_view(CollegeAdmin)
     admin.add_view(DepartmentAdmin)
     admin.add_view(FAQAdmin)
@@ -103,5 +157,7 @@ def setup_admin(app, engine):
     admin.add_view(ScholarshipAdmin)
     admin.add_view(TimetableAdmin)
     admin.add_view(LogAdmin)
+    admin.add_view(UserAdmin)
 
     return admin
+

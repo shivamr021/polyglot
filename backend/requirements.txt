@@ -6,3 +6,6 @@ alembic
 pandas
 python-dotenv
 sqladmin
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
