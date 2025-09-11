@@ -1,10 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bevan:ital@0;1&family=Fascinate&family=Italiana&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bevan:ital@0;1&family=Bungee+Shade&family=Fascinate&family=Fredericka+the+Great&family=Italiana&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&family=Rye&display=swap');
 
  /* @plugin 'tailwindcss-animate'; */
 /* @import "tailwindcss"; */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+df-messenger {
+   --df-messenger-bot-message: #515665;
+   --df-messenger-button-titlebar-color: #492eab;
+   --df-messenger-chat-background-color: #fafafa;
+   --df-messenger-font-color: white;
+   --df-messenger-send-icon: #878fac;
+   --df-messenger-user-message: #765ada;
+
+  }
 
 
 /*@import "tw-animate-css";
