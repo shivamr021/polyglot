@@ -31,6 +31,7 @@ def handle_admission_query(params: dict, db: Session) -> str:
 
     response_parts = [f"Admission details for {college.name}:"]
     for adm in admissions:
+        # FIX: Use the correct attribute 'course' in the response string.
         response_parts.append(f"- For {adm.course}, the process is: {adm.process}. The last date to apply is {adm.last_date.strftime('%B %d, %Y')}.")
     
     return " ".join(response_parts)

@@ -32,6 +32,7 @@ def handle_timetable_query(params: dict, db: Session) -> str:
 
     response_parts = [f"Here are the timetables for {college.name}:"]
     for tt in timetables:
+        # FIX: Use the correct attribute 'course' in the response string.
         response_parts.append(f"- For {tt.course} Semester {tt.semester}, you can find the timetable here: {tt.timetable_url}")
 
     return " ".join(response_parts)

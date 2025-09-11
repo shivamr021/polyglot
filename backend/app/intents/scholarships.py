@@ -5,7 +5,7 @@ from app.intents.utils import get_college_by_name, _normalize_for_query
 
 def handle_scholarship_query(params: dict, db: Session) -> str:
     college_name = params.get("college")
-    course_name = params.get("course") # Assuming users might ask "scholarships for btech"
+    course_param = params.get("course") # Assuming users might ask "scholarships for btech"
 
     if not college_name:
         return "Please specify a college to find scholarships."
@@ -16,10 +16,15 @@ def handle_scholarship_query(params: dict, db: Session) -> str:
 
     query = db.query(models.Scholarship).filter(models.Scholarship.college_id == college.id)
 
-    if course_name:
+    # FIX 1: Handle when 'course' is a list from Dialogflow
+    if course_param:
+        # If it's a list, take the first element; otherwise, use it as is.
+        course_name = course_param[0] if isinstance(course_param, list) else course_param
+        
         # Normalize and filter by course eligibility
         normalized_course = course_name.lower().replace('.', '').replace(' ', '')
-        query = query.filter(_normalize_for_query(models.Scholarship.course_eligibility).ilike(f"%{normalized_course}%"))
+        # FIX 2: Use the correct column name 'eligibility'
+        query = query.filter(_normalize_for_query(models.Scholarship.eligibility).ilike(f"%{normalized_course}%"))
 
     scholarships = query.all()
 
@@ -28,7 +33,8 @@ def handle_scholarship_query(params: dict, db: Session) -> str:
 
     response_parts = [f"Here are the scholarships available at {college.name}:"]
     for sch in scholarships:
-        response_parts.append(f"- {sch.name}: Amount ₹{sch.amount:,.2f}, Deadline: {sch.deadline.strftime('%B %d, %Y')}. Eligibility: {sch.course_eligibility}.")
+        # FIX 2: Use the correct attribute 'eligibility' in the response
+        response_parts.append(f"- {sch.name}: Amount ₹{sch.amount:,.2f}, Deadline: {sch.deadline.strftime('%B %d, %Y')}. Eligibility: {sch.eligibility}.")
 
     return " ".join(response_parts)
 
