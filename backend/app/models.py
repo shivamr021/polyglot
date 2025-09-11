@@ -47,7 +47,13 @@ class Department(Base):
     dept_name = Column(String, index=True)
 
     college = relationship("College", back_populates="departments")
+    
+    # ADD THE MISSING RELATIONSHIPS HERE
+    faqs = relationship("FAQ", back_populates="department")
+    fees = relationship("Fee", back_populates="department")
     holidays = relationship("Holiday", back_populates="department")
+    admissions = relationship("Admission", back_populates="department")
+    timetables = relationship("Timetable", back_populates="department")
 
     def __str__(self):
         return self.dept_name
@@ -67,6 +73,10 @@ class FAQ(Base):
     college = relationship("College", back_populates="faqs")
     department = relationship("Department", back_populates="faqs")
 
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return self.question[:50] + '...' if len(self.question) > 50 else self.question
+
 
 # ---------- Fees ----------
 class Fee(Base):
@@ -83,6 +93,10 @@ class Fee(Base):
     college = relationship("College", back_populates="fees")
     department = relationship("Department", back_populates="fees")
 
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return f"{self.program} - {self.year}"
+
 
 # ---------- Holidays ----------
 class Holiday(Base):
@@ -97,6 +111,10 @@ class Holiday(Base):
 
     college = relationship("College", back_populates="holidays")
     department = relationship("Department", back_populates="holidays")
+
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return self.holiday_name
 
 
 # ---------- Admissions ----------
@@ -114,6 +132,10 @@ class Admission(Base):
     college = relationship("College", back_populates="admissions")
     department = relationship("Department", back_populates="admissions")
 
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return self.course
+
 
 # ---------- Scholarships ----------
 class Scholarship(Base):
@@ -127,6 +149,10 @@ class Scholarship(Base):
     deadline = Column(Date)
 
     college = relationship("College", back_populates="scholarships")
+
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return self.name
 
 
 # ---------- Timetables ----------
@@ -143,6 +169,10 @@ class Timetable(Base):
 
     college = relationship("College", back_populates="timetables")
     department = relationship("Department", back_populates="timetables")
+
+    # ADD __str__ FOR BETTER DISPLAY IN ADMIN
+    def __str__(self):
+        return f"{self.course} - Sem {self.semester}"
 
 
 # ---------- Logs ----------
