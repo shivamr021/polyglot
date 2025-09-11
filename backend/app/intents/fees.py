@@ -29,7 +29,8 @@ def handle_fee_deadline(params: dict, db: Session) -> str:
         db.query(models.Fee)
         .filter(
             models.Fee.college_id == college.id,
-            _normalize_for_query(models.Fee.course_name).ilike(f"%{normalized_course}%"),
+            # FIX: Use the correct column name 'program' instead of 'course_name'
+            _normalize_for_query(models.Fee.program).ilike(f"%{normalized_course}%"),
         )
         .first()
     )
@@ -38,4 +39,5 @@ def handle_fee_deadline(params: dict, db: Session) -> str:
         return f"I'm sorry, I don't have the fee deadline information for the {course_name} course at {college.name}."
 
     formatted_date = fee_info.deadline.strftime("%B %d, %Y")
-    return f"The fee deadline for the {fee_info.course_name} course at {college.name} is {formatted_date}."
+    # FIX: Use the correct attribute 'program' in the response
+    return f"The fee deadline for the {fee_info.program} course at {college.name} is {formatted_date}."
