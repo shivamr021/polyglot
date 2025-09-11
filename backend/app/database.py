@@ -5,9 +5,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL)
+# Create the SQLAlchemy engine
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    # This setting helps manage stale connections by testing them before use.
+    # It will make the app more resilient to temporary network issues.
+    pool_pre_ping=True
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
