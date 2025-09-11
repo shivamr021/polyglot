@@ -11,10 +11,11 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user")
-    # Corrected line below
+    role = Column(String, default="user")  # 'user' or 'admin'
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+    def __str__(self):
+        return self.username
 
 # ---------- Colleges ----------
 class College(Base):
@@ -34,6 +35,8 @@ class College(Base):
     scholarships = relationship("Scholarship", back_populates="college")
     timetables = relationship("Timetable", back_populates="college")
 
+    def __str__(self):
+        return self.name
 
 # ---------- Departments ----------
 class Department(Base):
@@ -44,12 +47,10 @@ class Department(Base):
     dept_name = Column(String, index=True)
 
     college = relationship("College", back_populates="departments")
-    faqs = relationship("FAQ", back_populates="department")
-    fees = relationship("Fee", back_populates="department")
     holidays = relationship("Holiday", back_populates="department")
-    admissions = relationship("Admission", back_populates="department")
-    timetables = relationship("Timetable", back_populates="department")
 
+    def __str__(self):
+        return self.dept_name
 
 # ---------- FAQs ----------
 class FAQ(Base):

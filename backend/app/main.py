@@ -10,6 +10,8 @@ import os
 from app.database import Base, engine, get_db
 from app import models, schemas, auth
 from app.admin import setup_admin
+# IMPORT THE NEW ROUTER
+from app.routers import uploads
 
 # Import intent handlers
 from app.intents.fees import handle_fee_deadline
@@ -108,6 +110,8 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 app.include_router(auth_router)
+# INCLUDE THE UPLOADS ROUTER
+app.include_router(uploads.router)
 
 
 # ---------- Health Check ----------
