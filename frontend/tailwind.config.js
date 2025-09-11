@@ -11,7 +11,10 @@ export default {
         italiana: ['Italiana', 'sans-serif'],
         bebas: ['Bebas Neue', 'sans-serif'],
         bevan: ['Bevan', 'sans-serif'],
-        fascinate: ['Fascinate', 'sans-serif']
+        fascinate: ['Fascinate', 'sans-serif'],
+        frederica: ['Fredericka the Great', 'sans-serif'],
+        rye: ['Rye', 'sans-serif'],
+        bungee: ['Bungee Shade', 'sans-serif']
       },
       animation: {
         'star-movement-bottom': 'star-movement-bottom linear infinite alternate',
