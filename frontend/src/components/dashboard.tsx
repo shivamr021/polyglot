@@ -52,10 +52,8 @@ export default function Dashboard() {
       if (!messenger || !messenger.shadowRoot) return false;
       const root = messenger.shadowRoot as ShadowRoot;
 
-      // 🔹 Move widget circle to top-right
-      const widgetIcon = root.querySelector(
-        "#widgetIcon"
-      ) as HTMLElement | null;
+      // Move widget circle to top-right
+      const widgetIcon = root.querySelector("#widgetIcon") as HTMLElement | null;
       if (widgetIcon) {
         widgetIcon.style.position = "fixed";
         widgetIcon.style.top = "20px";
@@ -65,21 +63,8 @@ export default function Dashboard() {
         widgetIcon.style.zIndex = "9999";
       }
 
-      // 🔹 Inject permanent CSS override (only once)
-      if (!root.getElementById("remove-bubble-style")) {
-        const styleEl = document.createElement("style");
-        styleEl.id = "remove-bubble-style";
-        styleEl.textContent = `
-      .df-messenger-chat-bubble {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-      }
-    `;
-        root.appendChild(styleEl);
-      }
 
-      // 🔹 Initial sync — only apply hide/show on small screens
+      // Initial sync — only apply hide/show on small screens
       if (window.innerWidth <= 768) {
         if (isChatOpen(root)) hideBottom();
         else showBottom();
@@ -91,7 +76,7 @@ export default function Dashboard() {
             if (isChatOpen(root)) hideBottom();
             else showBottom();
           } else {
-            showBottom(); // always show on bigger screens
+            showBottom();
           }
         }, 150);
       };
@@ -101,7 +86,6 @@ export default function Dashboard() {
         (widgetIcon as any)._poly_iconHandler = iconHandler;
       }
 
-      // 🔹 Watch for mutations inside shadow root
       observer = new MutationObserver(() => {
         try {
           if (window.innerWidth <= 768) {
@@ -220,10 +204,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div
-        id="polyrobot-container"
-        className="absolute -bottom-7 xl:-bottom-12 left-[50%] -translate-x-[50%]"
-      >
+      <div id="polyrobot-container" className="absolute -bottom-7 xl:-bottom-12 left-[50%] -translate-x-[50%]">
         <img
           src="/robot.gif"
           alt="Robot animation"
