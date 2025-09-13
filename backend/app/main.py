@@ -47,9 +47,15 @@ app = FastAPI(title="College Chatbot API", version="1.0.0")
 app.add_middleware(SessionMiddleware, secret_key=ADMIN_SECRET_KEY)
 
 # Allow frontend access
+origins = [
+    "https://polyglot-orpin.vercel.app",
+    "http://localhost",
+    "http://localhost:3000", # In case you run your frontend locally
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten later for security
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
